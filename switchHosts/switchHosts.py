@@ -1,5 +1,6 @@
 import PySimpleGUI as sg
 import os.path
+import shutil
 
 hosts_folder = r"C:\Windows\System32\drivers\etc"
 
@@ -30,6 +31,16 @@ def get_file_content(file_path):
     return text
 
 
+def replace_file(orig_file, new_file):
+    if os.path.exists(orig_file) and os.path.exists(new_file):
+        if os.path.samefile(orig_file, new_file):
+            # Same file
+            return
+        else:
+            os.remove(orig_file)
+            shutil.copy(new_file, orig_file)
+
+
 file_list_column = [
     [
         sg.Text("Folder: "),
@@ -40,6 +51,9 @@ file_list_column = [
             values=get_file_list(hosts_folder), enable_events=True, size=(40, 21), key="-FILE LIST-"
         )
     ],
+    [
+        sg.Button("Replace hosts file", disabled=True, key="-REPLACE BUTTON-")
+    ]
 ]
 
 file_viewer_column = [
@@ -75,8 +89,20 @@ while True:
             )
             window["-TOUT-"].update(filename)
             window["-IMAGE-"].update(get_file_content(filename))
+            window["-REPLACE BUTTON-"].update(disabled=False)
         except:
             pass
+    if event == "-REPLACE BUTTON-":
+        ch = sg.popup_yes_no(f'Are you sure you want to replace hosts by {values["-FILE LIST-"][0]}?', no_titlebar=True)
+        if ch == "Yes":
+            new_file = filename
+            orig_file = os.path.join(values["-FOLDER-"], "hosts")
+            replace_file(orig_file, new_file)
+            file_names = get_file_list(values["-FOLDER-"])
+            window["-FILE LIST-"].update(file_names)
+        if ch == "No":
+            pass
+
 
 
 
